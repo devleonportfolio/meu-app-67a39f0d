@@ -1,0 +1,39 @@
+{
+  "appId": "app.meuapp.mobile",
+  "appName": "Meu app",
+  "webDir": "www",
+  "server": {
+    "url": "https://native-web-builder.lovable.app/teste-nativo",
+    "cleartext": false,
+    "androidScheme": "https",
+    "errorPath": "offline.html"
+  },
+  "android": {
+    "allowMixedContent": false,
+    "backgroundColor": "#101418"
+  },
+  "ios": {
+    "contentInset": "always",
+    "backgroundColor": "#101418",
+    "scrollEnabled": true,
+    "limitsNavigationsToAppBoundDomains": false
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 1500,
+      "backgroundColor": "#101418",
+      "showSpinner": false
+    },
+    "StatusBar": {
+      "backgroundColor": "#101418",
+      "style": "DARK"
+    },
+    "PushNotifications": {
+      "presentationOptions": [
+        "badge",
+        "sound",
+        "alert"
+      ]
+    }
+  }
+}

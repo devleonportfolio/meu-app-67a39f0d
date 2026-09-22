@@ -1,0 +1,70 @@
+# Build na nuvem (Codemagic) — Android e iOS
+# Gerado automaticamente pelo url2app.
+# Sem certificados: sai um APK de teste (Android) e um app iOS sem assinatura.
+# Com certificados: crie no Codemagic o grupo de variáveis "android_signing"
+# (CM_KEYSTORE, CM_KEYSTORE_PASSWORD, CM_KEY_ALIAS, CM_KEY_PASSWORD) e habilite o iOS code signing.
+workflows:
+  android-release:
+    name: Meu app — Android
+    max_build_duration: 60
+    instance_type: mac_mini_m2
+    environment:
+      node: 20
+      java: 21
+    scripts:
+      - name: Instalar dependências
+        script: npm install
+      - name: Preparar projeto Android
+        script: |
+          npx cap add android || true
+          node scripts/apply-native-config.mjs
+          npx cap sync android
+      - name: Assinatura (opcional)
+        script: |
+          if [ -n "$CM_KEYSTORE" ]; then
+            echo $CM_KEYSTORE | base64 --decode > android/app/keystore.jks
+            cat >> android/key.properties <<EOF
+          storePassword=$CM_KEYSTORE_PASSWORD
+          keyPassword=$CM_KEY_PASSWORD
+          keyAlias=$CM_KEY_ALIAS
+          storeFile=keystore.jks
+          EOF
+          fi
+      - name: Gerar APK/AAB
+        script: |
+          cd android
+          if [ -n "$CM_KEYSTORE" ]; then
+            ./gradlew bundleRelease assembleRelease
+          else
+            ./gradlew assembleDebug
+          fi
+    artifacts:
+      - android/app/build/outputs/**/*.aab
+      - android/app/build/outputs/**/*.apk
+
+  ios-release:
+    name: Meu app — iOS
+    max_build_duration: 90
+    instance_type: mac_mini_m2
+    environment:
+      node: 20
+      xcode: latest
+      cocoapods: default
+    scripts:
+      - name: Instalar dependências
+        script: npm install
+      - name: Preparar projeto iOS
+        script: |
+          npx cap add ios || true
+          node scripts/apply-native-config.mjs
+          npx cap sync ios
+          cd ios/App && pod install
+      - name: Compilar (sem assinatura)
+        script: |
+          xcodebuild -workspace ios/App/App.xcworkspace \
+            -scheme App -configuration Release \
+            -sdk iphoneos -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO
+    artifacts:
+      - build/Build/Products/Release-iphoneos/*.app
+      - build/ios/ipa/*.ipa
